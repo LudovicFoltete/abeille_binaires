@@ -1,0 +1,22 @@
+import groovy.util.slurpersupport.GPathResult
+
+String groupId        = 'org.springframework'
+String artifactId     = 'spring-web'
+String repositoryUrl  = 'https://repo1.maven.org/maven2'
+String packageUrl     = "${groupId.replaceAll('\\.', '/')}/${artifactId}"
+String metadataXmlUrl = "${repositoryUrl}/${packageUrl}/maven-metadata.xml"
+
+// Get XML file from 'metadataXmlUrl' URL with GET HTTP request
+String metadataXml = new URL(metadataXmlUrl).text
+
+// Parse the XML file
+GPathResult xml = new XmlSlurper().parseText(metadataXml)
+
+// Extract the list of versions from the XML
+List<String> versions = xml.versioning.versions.version*.text()
+
+// Reverse the order of the versions
+versions = versions.reverse()
+
+// Return the list of versions
+println(versions)
