@@ -1,0 +1,108 @@
+/*
+ * Copyright 2022 Ludovic Foltete. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import groovy.transform.CompileStatic
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+/**
+ * Sort list of software's version in descending order
+ *
+ * @author Ludovic Foltete
+ */
+@CompileStatic
+class SortSoftwareVersions {
+
+    // Trouve le premier caractère non numérique, et l'utilise comme délimiteur
+    // Pour couper le string en 2 (avant et après ce caractère)
+    Map<String, String> findFirstNonNumericCharAndSplitString(String str) {
+
+        // Compiler l'expression régulière pour trouver les caractères non numériques
+        Matcher matcher = Pattern.compile('[^\\d]').matcher(str)
+
+        // Si aucun caractère non numérique n'est trouvé, renvoyer 'str' dans la partie numerique
+        // '~'' est la dernière lettre du ASCII, assurant qu'il soit trié en priorité alphabétiquement
+        if (!matcher.find()) return [numeric:str, alpha:'~']
+
+        // Trouver l'index du premier caractère non numérique dans 'str'
+        int index = matcher.start()
+
+        // Si le premier caractère n'est pas numérique, renvoyer 'str' dans la partie alphabétique
+        if (index == 0) return [numeric:'', alpha:str]
+
+        // Sinon, couper 'str' en deux parties (avant et après le premier caractère non numérique)
+        String numPart   = str[0..index - 1]
+        String alphaPart = str[index..-1]
+        return [numeric:numPart, alpha:alphaPart]
+    }
+
+    List<String> sort(List<String> versions) {
+
+        // Redéfinie la fonction standard de tri 'sort' pour les `List` avec une closure
+        versions.sort { a, b ->
+            // Extraire les parties du numéro de version (majeure, mineure...) pour chaque élément
+            List<String> aParts = a.tokenize('.')
+            List<String> bParts = b.tokenize('.')
+
+            // Index de la partie du numéro de version traitée par la boucle while
+            int i = 0
+
+            // Comparer les parties du numéro de version l'une après l'autre
+            while (true) {
+                // Si la boucle a atteint la fin d'une des deux listes, arrêter la boucle
+                if (i >= aParts.size() || i >= bParts.size()) {
+                    break
+                }
+
+                // Diviser chaque partie en deux sous-parties :
+                // une partie numérique et une partie alphabétique
+                Map<String, String> aPart = findFirstNonNumericCharAndSplitString(aParts[i])
+                Map<String, String> bPart = findFirstNonNumericCharAndSplitString(bParts[i])
+
+                // Si vide, assigner la valeur 0 à la partie numérique, sinon la convertir en entier
+                int    aNumPart   = (aPart.numeric == '') ? 0 : aPart.numeric.toInteger()
+                int    bNumPart   = (bPart.numeric == '') ? 0 : bPart.numeric.toInteger()
+                String aAlphaPart = aPart.alpha
+                String bAlphaPart = bPart.alpha
+
+                // Si les parties numériques sont différentes,
+                // retourner le résultat de la comparaison numérique (entier)
+                if (aNumPart != bNumPart) {
+                    return bNumPart <=> aNumPart
+                }
+
+                // Sinon, si les parties alphabétiques sont différentes,
+                // retourner le résultat de la comparaison alphabétique
+                if (aAlphaPart != bAlphaPart) {
+                    return bAlphaPart <=> aAlphaPart
+                }
+
+                // Sinon, passer à la prochaine partie du numéro de version
+                i++
+            }
+
+            // Si les versions ont été identiques jusqu'ici, comparer le nombre de parties restantes
+            return bParts.size() <=> aParts.size()
+        }
+        return versions
+    }
+
+}
+
+List<String> versions = ['MEP-2022-10-02', '1.2.3', '1.5.1_beta', '1.10.2', '2.0',
+                         'MEP-2022-08-02', '1.1.0', '1.0', '1.10.2.1', '1.2.3.0',
+                         '1.2.3-rc1', '1.5.1', '1.10.2-rc1', '1.10.2-rc2']
+sortedVersions = new SortSoftwareVersions().sort(versions)
+println(sortedVersions)
