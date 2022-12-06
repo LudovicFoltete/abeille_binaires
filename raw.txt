@@ -1,0 +1,39 @@
+import groovy.json.JsonSlurper
+
+final String REPOSITORY_URL = 'https://nexus'
+final String REPOSITORY = 'releases'
+final String GROUP = 'angular-project-app'
+
+// Define the Nexus REST API endpoint to get artifact informations
+String metadataJsonUrl = "${REPOSITORY_URL}/service/rest/v1/search?repository=${REPOSITORY}&group=/${GROUP}"
+
+// Create a new empty list to hold the results
+List<String> result = []
+// Set the initial continuation token to null
+String continuationToken = null
+// Set a flag to indicate whether there are more results to retrieve
+boolean moreResults = true
+
+// Keep looping as long as there are more results to retrieve
+while (moreResults) {
+    // Build the URL for the API call, including the continuation token if it exists
+    String url = endpointUrl
+    if (continuationToken) url += "?continuationToken=$continuationToken"
+
+    // Make the API call and parse the JSON response
+    Object json = new JsonSlurper().parse(new URL(metadataJsonUrl))
+
+    // Add the items from the response to the result list
+    result.addAll(json.items.name)
+
+    // Update the continuation token and moreResults flag based on the response
+    continuationToken = json.continuationToken
+    moreResults = json.continuationToken != null
+}
+
+// Clean all name's occurrences to only keep the version
+List<String> versions = result*.replaceAll("${GROUP}/${GROUP}-", '')*.replaceAll('.tar.gz', '')
+
+// Return the list of versions
+println versions
+
