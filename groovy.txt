@@ -60,7 +60,8 @@ class SortSoftwareVersions {
         // If the first character is not numeric, return 'str' in the alpha part
         if (index == 0) return [numeric:'', alpha:str]
 
-        // Otherwise, split 'str' into two parts (before and after the first non-numeric character)
+        // Otherwise, split 'str' into two parts 
+        // (before and after the first non-numeric character)
         String numPart   = str[0..index - 1]
         String alphaPart = str[index..-1]
         return [numeric:numPart, alpha:alphaPart]
@@ -105,12 +106,14 @@ class SortSoftwareVersions {
                 String aAlphaPart = (aPart.alpha == '') ? '~' : aPart.alpha
                 String bAlphaPart = (bPart.alpha == '') ? '~' : bPart.alpha
 
-                // Si If the numeric parts are different, return the result of the numerical comparison
+                // If the numeric parts are different,
+                // return the result of the numerical comparison
                 if (aNumPart != bNumPart) {
                     return bNumPart <=> aNumPart
                 }
 
-                // Otherwise, if the alpha parts are different, return the result of the alpha comparison
+                // Otherwise, if the alpha parts are different, 
+                // return the result of the alpha comparison
                 if (aAlphaPart != bAlphaPart) {
                     return bAlphaPart <=> aAlphaPart
                 }
